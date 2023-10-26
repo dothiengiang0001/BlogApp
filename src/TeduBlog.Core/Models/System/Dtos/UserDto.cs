@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TeduBlog.Core.Domain.Identity;
 
-namespace TeduBlog.Core.Models.System
+namespace TeduBlog.Core.Models.System.Dtos
 {
     public class UserDto
     {

@@ -11,4 +11,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0-rc.1.23421.29" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Domain\Sales\" />
+    <Folder Include="Models\Auth\Dtos\" />
+    <Folder Include="Models\Content\Results\" />
+    <Folder Include="Models\System\Results\" />
+  </ItemGroup>
+
 </Project>

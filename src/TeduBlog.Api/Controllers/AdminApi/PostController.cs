@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using TeduBlog.Core.Models.Content;
 using TeduBlog.Core.Models;
 using TeduBlog.Core.SeedWorks;
 using TeduBlog.Core.Domain.Content;
+using TeduBlog.Core.Models.Content.Requests;
+using TeduBlog.Core.Models.Content.Dtos;
 
 namespace TeduBlog.Api.Controllers.AdminApi
 {

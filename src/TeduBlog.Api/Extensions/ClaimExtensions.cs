@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Security.Claims;
 using TeduBlog.Core.Domain.Identity;
-using TeduBlog.Core.Models.System;
+using TeduBlog.Core.Models.System.Dtos;
 
 namespace TeduBlog.Api.Extensions
 {

@@ -2,12 +2,10 @@
 using System.ComponentModel.DataAnnotations;
 using TeduBlog.Core.Domain.Content;
 
-namespace TeduBlog.Core.Models.Content
+namespace TeduBlog.Core.Models.Content.Requests
 {
-    public class PostInListDto
+    public class CreateUpdatePostRequest
     {
-        public Guid Id { get; set; }
-
         public required string Name { get; set; }
 
         public required string Slug { get; set; }
@@ -16,14 +14,20 @@ namespace TeduBlog.Core.Models.Content
         public string? Description { get; set; }
 
         public string? Thumbnail { get; set; }
-        public int ViewCount { get; set; }
-        public DateTime DateCreated { get; set; }
+        public Guid CategoryId { get; set; }
 
+        public string? Content { get; set; }
+
+        public string? Source { get; set; }
+
+        public string? Tags { get; set; }
+
+        public string? SeoDescription { get; set; }
         public class AutoMapperProfiles : Profile
         {
             public AutoMapperProfiles()
             {
-                CreateMap<Post, PostInListDto>();
+                CreateMap<CreateUpdatePostRequest, Post>();
             }
         }
     }

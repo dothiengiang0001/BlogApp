@@ -8,7 +8,8 @@ using TeduBlog.Api.Extensions;
 using TeduBlog.Api.Filters;
 using TeduBlog.Core.Domain.Identity;
 using TeduBlog.Core.Models;
-using TeduBlog.Core.Models.System;
+using TeduBlog.Core.Models.System.Dtos;
+using TeduBlog.Core.Models.System.Requests;
 using TeduBlog.Core.SeedWorks.Constants;
 
 namespace TeduBlog.Api.Controllers.AdminApi
@@ -85,18 +86,44 @@ namespace TeduBlog.Api.Controllers.AdminApi
         [HttpGet]
         [Route("paging")]
         [Authorize(Permissions.Roles.View)]
-        public async Task<ActionResult<PagedResult<RoleDto>>> GetRolesAllPaging(string? keyword, int pageIndex = 1, int pageSize = 10)
+        public async Task<ActionResult<PagedResult<RoleDto>>> GetRolesAllPaging(string? sortField, int sortOrder, string? keyword, int pageIndex = 1, int pageSize = 10)
         {
             var query = _roleManager.Roles;
+            // SORT
+            if (!string.IsNullOrEmpty(sortField))
+            {
+                switch (sortOrder)
+                {
+                    case 1:
+                        {
+                            query = query.OrderBy(x => EF.Property<object>(x, sortField));
+                            break;
+                        }
+
+                    case -1:
+                        {
+                            query = query.OrderByDescending(x => EF.Property<object>(x, sortField));
+                            break;
+                        }
+                    default:
+                        break;
+                }
+            }
+
+            // FIND
             if (!string.IsNullOrEmpty(keyword))
                 query = query.Where(x => x.Name.Contains(keyword)
                                          || x.DisplayName.Contains(keyword));
 
+            // PAGING
             var totalRow = query.Count();
             query = query.Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize);
 
+            // MAPPING
             var data = await _mapper.ProjectTo<RoleDto>(query).ToListAsync();
+
+            // RETURN RESPONSE
             var paginationSet = new PagedResult<RoleDto>
             {
                 Results = data,

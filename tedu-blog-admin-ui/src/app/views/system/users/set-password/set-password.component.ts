@@ -53,14 +53,14 @@ export class SetPasswordComponent implements OnInit, OnDestroy {
   // Validate
   noSpecial: RegExp = /^[^<>*!_~]+$/;
   validationMessages = {
-    passsword: [
+    newPassword: [
       { type: 'required', message: 'Bạn phải nhập mật khẩu' },
-      {
-        type: 'pattern',
-        message: 'Mật khẩu ít nhất 8 ký tự, ít nhất 1 số, 1 ký tự đặc biệt, và một chữ hoa',
-      },
+      { type: 'pattern', message: 'Mật khẩu ít nhất 8 ký tự, ít nhất 1 số, 1 ký tự đặc biệt, và một chữ hoa' },
     ],
-    confirmPassword: [{ type: 'required', message: 'Xác nhận mật khẩu không đúng' }],
+    confirmNewPassword: [
+      { type: 'required', message: 'Bạn phải nhập mật khẩu' },
+      { type: 'confirmedValidator', message: 'Xác nhận mật khẩu không trùng khớp' },
+    ],
   };
 
   saveChange() {
@@ -69,6 +69,9 @@ export class SetPasswordComponent implements OnInit, OnDestroy {
   }
 
   private saveData() {
+    if (!this.form?.valid) {
+      return;
+    }
     this.userService
       .setPassword(this.config.data.id, this.form.value)
       .pipe(takeUntil(this.ngUnsubscribe))
@@ -90,9 +93,15 @@ export class SetPasswordComponent implements OnInit, OnDestroy {
             ),
           ])
         ),
-        confirmNewPassword: new FormControl(null),
+        confirmNewPassword: new FormControl(
+          null,
+          Validators.compose([
+            Validators.required
+          ])),
       },
-      passwordMatchingValidatior
+      {
+        validator: this.confirmedValidator('newPassword', 'confirmNewPassword'),
+      }
     );
   }
 
@@ -107,12 +116,22 @@ export class SetPasswordComponent implements OnInit, OnDestroy {
       }, 1000);
     }
   }
-}
-export const passwordMatchingValidatior: ValidatorFn = (
-  control: AbstractControl
-): ValidationErrors | null => {
-  const password = control.get('newPassword');
-  const confirmPassword = control.get('confirmNewPassword');
 
-  return password?.value === confirmPassword?.value ? null : { notmatched: true };
-};
+  confirmedValidator(controlName: string, matchingControlName: string) {
+    return (formGroup: FormGroup) => {
+      const control = formGroup.controls[controlName];
+      const matchingControl = formGroup.controls[matchingControlName];
+      if (
+        matchingControl.errors &&
+        !matchingControl.errors['confirmedValidator']
+      ) {
+        return;
+      }
+      if (control.value !== matchingControl.value) {
+        matchingControl.setErrors({ confirmedValidator: true });
+      } else {
+        matchingControl.setErrors(null);
+      }
+    };
+  }
+}

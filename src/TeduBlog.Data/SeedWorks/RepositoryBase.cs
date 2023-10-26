@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TeduBlog.Core.SeedWorks;
+using TeduBlog.Data.Persistence;
 
 namespace TeduBlog.Data.SeedWorks
 {

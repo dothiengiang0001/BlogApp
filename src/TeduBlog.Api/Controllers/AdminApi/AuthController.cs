@@ -7,8 +7,9 @@ using System.Text.Json;
 using TeduBlog.Api.Extensions;
 using TeduBlog.Api.Services;
 using TeduBlog.Core.Domain.Identity;
-using TeduBlog.Core.Models.Auth;
-using TeduBlog.Core.Models.System;
+using TeduBlog.Core.Models.Auth.Requests;
+using TeduBlog.Core.Models.Auth.Results;
+using TeduBlog.Core.Models.System.Dtos;
 using TeduBlog.Core.SeedWorks.Constants;
 
 namespace TeduBlog.Api.Controllers.AdminApi
@@ -32,6 +33,11 @@ namespace TeduBlog.Api.Controllers.AdminApi
             _roleManager = roleManager;
         }
 
+        /// <summary>
+        /// Login to system admin
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<ActionResult<AuthenticatedResult>> Login([FromBody] LoginRequest request)
         {
@@ -81,6 +87,11 @@ namespace TeduBlog.Api.Controllers.AdminApi
             });
         }
 
+        /// <summary>
+        /// Get permissions throuh userId
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         private async Task<List<string>> GetPermissionsByUserIdAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);

@@ -42,13 +42,16 @@ export class TokenStorageService {
   }
 
   public getUser(): UserModel | null {
-    const token = window.localStorage.getItem(USER_KEY);
-    if (!token)
+    try {
+      const token = window.localStorage.getItem(USER_KEY);
+      if (!token) return null;
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace('-', '+').replace('_', '/');
+      const user: UserModel = JSON.parse(this.b64DecodeUnicode(base64));
+      return user;
+    } catch (error) {
       return null;
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace('-', '+').replace('_', '/');
-    const user: UserModel = JSON.parse(this.b64DecodeUnicode(base64));
-    return user;
+    }
   }
 
   b64DecodeUnicode(str) {

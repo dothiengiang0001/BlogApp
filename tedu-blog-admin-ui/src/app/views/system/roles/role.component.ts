@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import {
   AdminApiRoleApiClient,
@@ -8,9 +8,10 @@ import {
 import { DialogService, DynamicDialogComponent } from 'primeng/dynamicdialog';
 import { AlertService } from 'src/app/shared/services/alert.service';
 import { ConfirmationService } from 'primeng/api';
-import { RoleDetailComponent } from './role-detail.component';
+import { RoleDetailComponent } from './role-detail/role-detail.component';
 import { MessageConstants } from '../../../shared/constants/messages.constant';
-import { PermissionGrantComponent } from './permission-grant.component';
+import { PermissionGrantComponent } from './permission-grant/permission-grant.component';
+import { Paginator } from 'primeng/paginator';
 
 @Component({
   selector: 'app-role',
@@ -25,11 +26,15 @@ export class RoleComponent implements OnInit, OnDestroy {
   public pageIndex: number = 1;
   public pageSize: number = 10;
   public totalCount: number;
+  public sortField = null;
+  public sortOrder = -1;
 
   //Business variables
   public items: RoleDto[];
   public selectedItems: RoleDto[] = [];
   public keyword: string = '';
+
+  @ViewChild('paginator', { static: true }) paginator: Paginator;
 
   constructor(
     private roleService: AdminApiRoleApiClient,
@@ -46,14 +51,24 @@ export class RoleComponent implements OnInit, OnDestroy {
     this.loadData();
   }
 
+  onLazyLoad($event) {
+    this.pageIndex = ($event.first / this.pageSize) + 1;
+    this.sortField = $event.sortField;
+    this.sortOrder = $event.sortOrder;
+    this.pageSize = $event.rows;
+    this.paginator.changePage(this.pageIndex - 1);
+    this.loadData();
+}
+
   loadData() {
     this.toggleBlockUI(true);
 
     this.roleService
-      .getRolesAllPaging(this.keyword, this.pageIndex, this.pageSize)
+      .getRolesAllPaging(this.sortField, this.sortOrder, this.keyword, this.pageIndex, this.pageSize)
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe({
         next: (response: RoleDtoPagedResult) => {
+          debugger;
           this.items = response.results;
           this.totalCount = response.rowCount;
 
@@ -66,7 +81,7 @@ export class RoleComponent implements OnInit, OnDestroy {
   }
 
   pageChanged(event: any): void {
-    this.pageIndex = event.page;
+    this.pageIndex = event.page + 1;
     this.pageSize = event.rows;
     this.loadData();
   }

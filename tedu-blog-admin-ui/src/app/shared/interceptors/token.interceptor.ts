@@ -26,7 +26,7 @@ const TOKEN_HEADER_KEY = 'Authorization'; // for Spring Boot back-end
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
+  public refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
     null
   );
 
@@ -49,7 +49,7 @@ export class TokenInterceptor implements HttpInterceptor {
       catchError((error) => {
         if (
           error instanceof HttpErrorResponse &&
-          !authReq.url.includes('auth/login') &&
+          !authReq.url.includes('admin/auth') &&
           error.status === 401
         ) {
           return this.handle401Error(authReq, next);

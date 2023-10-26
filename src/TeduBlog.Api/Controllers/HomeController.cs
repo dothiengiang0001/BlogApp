@@ -7,5 +7,10 @@ namespace TeduBlog.Api.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
+        [HttpGet]
+        public async Task<ActionResult> Index()
+        {
+            return Redirect("/Swagger/index.html");
+        }
     }
 }

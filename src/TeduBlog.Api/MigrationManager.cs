@@ -1,18 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TeduBlog.Data;
+using TeduBlog.Data.Persistence;
 
 namespace TeduBlog.Api
 {
     public static class MigrationManager
     {
-        public static WebApplication MigrateDatabase(this WebApplication app)
+        public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app)
         {
             using(var scope = app.Services.CreateScope())
             {
                 using (var context = scope.ServiceProvider.GetRequiredService<TeduBlogContext>())
                 {
                     context.Database.Migrate();
-                    new DataSeeder().SeedAsync(context).Wait();
+                    await new TeduBlogContextSeed().SeedAsync(context);
                 }
             }
             return app;

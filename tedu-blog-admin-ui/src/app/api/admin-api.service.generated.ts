@@ -84,6 +84,65 @@ export class AdminApiAuthApiClient {
 }
 
 @Injectable()
+export class AdminApiHomeApiClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(ADMIN_API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "";
+    }
+
+    /**
+     * @return Success
+     */
+    index(): Observable<void> {
+        let url_ = this.baseUrl + "/api/Home";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIndex(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIndex(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processIndex(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable()
 export class AdminApiPostApiClient {
     private http: HttpClient;
     private baseUrl: string;
@@ -596,13 +655,21 @@ export class AdminApiRoleApiClient {
     }
 
     /**
+     * @param sortField (optional) 
+     * @param sortOrder (optional) 
      * @param keyword (optional) 
      * @param pageIndex (optional) 
      * @param pageSize (optional) 
      * @return Success
      */
-    getRolesAllPaging(keyword?: string | null | undefined, pageIndex?: number | undefined, pageSize?: number | undefined): Observable<RoleDtoPagedResult> {
+    getRolesAllPaging(sortField?: string | null | undefined, sortOrder?: number | undefined, keyword?: string | null | undefined, pageIndex?: number | undefined, pageSize?: number | undefined): Observable<RoleDtoPagedResult> {
         let url_ = this.baseUrl + "/api/admin/role/paging?";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
+        if (sortOrder === null)
+            throw new Error("The parameter 'sortOrder' cannot be null.");
+        else if (sortOrder !== undefined)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
         if (keyword !== undefined && keyword !== null)
             url_ += "keyword=" + encodeURIComponent("" + keyword) + "&";
         if (pageIndex === null)
@@ -1119,13 +1186,21 @@ export class AdminApiUserApiClient {
     }
 
     /**
+     * @param sortField (optional) 
+     * @param sortOrder (optional) 
      * @param keyword (optional) 
      * @param pageIndex (optional) 
      * @param pageSize (optional) 
      * @return Success
      */
-    getAllUsersPaging(keyword?: string | null | undefined, pageIndex?: number | undefined, pageSize?: number | undefined): Observable<UserDtoPagedResult> {
+    getAllUsersPaging(sortField?: string | null | undefined, sortOrder?: number | undefined, keyword?: string | null | undefined, pageIndex?: number | undefined, pageSize?: number | undefined): Observable<UserDtoPagedResult> {
         let url_ = this.baseUrl + "/api/admin/user/paging?";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
+        if (sortOrder === null)
+            throw new Error("The parameter 'sortOrder' cannot be null.");
+        else if (sortOrder !== undefined)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
         if (keyword !== undefined && keyword !== null)
             url_ += "keyword=" + encodeURIComponent("" + keyword) + "&";
         if (pageIndex === null)
@@ -1543,7 +1618,7 @@ export interface IAuthenticatedResult {
 }
 
 export class ChangeEmailRequest implements IChangeEmailRequest {
-    email?: string | undefined;
+    email!: string;
 
     constructor(data?: IChangeEmailRequest) {
         if (data) {
@@ -1575,12 +1650,12 @@ export class ChangeEmailRequest implements IChangeEmailRequest {
 }
 
 export interface IChangeEmailRequest {
-    email?: string | undefined;
+    email: string;
 }
 
 export class ChangeMyPasswordRequest implements IChangeMyPasswordRequest {
-    oldPassword?: string | undefined;
-    newPassword?: string | undefined;
+    oldPassword!: string;
+    newPassword!: string;
 
     constructor(data?: IChangeMyPasswordRequest) {
         if (data) {
@@ -1614,8 +1689,8 @@ export class ChangeMyPasswordRequest implements IChangeMyPasswordRequest {
 }
 
 export interface IChangeMyPasswordRequest {
-    oldPassword?: string | undefined;
-    newPassword?: string | undefined;
+    oldPassword: string;
+    newPassword: string;
 }
 
 export class CreateUpdatePostRequest implements ICreateUpdatePostRequest {
@@ -1687,8 +1762,8 @@ export interface ICreateUpdatePostRequest {
 }
 
 export class CreateUpdateRoleRequest implements ICreateUpdateRoleRequest {
-    name?: string | undefined;
-    displayName?: string | undefined;
+    name!: string;
+    displayName!: string;
 
     constructor(data?: ICreateUpdateRoleRequest) {
         if (data) {
@@ -1722,20 +1797,20 @@ export class CreateUpdateRoleRequest implements ICreateUpdateRoleRequest {
 }
 
 export interface ICreateUpdateRoleRequest {
-    name?: string | undefined;
-    displayName?: string | undefined;
+    name: string;
+    displayName: string;
 }
 
 export class CreateUserRequest implements ICreateUserRequest {
-    firstName?: string | undefined;
-    lastName?: string | undefined;
-    userName?: string | undefined;
-    email?: string | undefined;
-    phoneNumber?: string | undefined;
-    password?: string | undefined;
+    firstName!: string;
+    lastName!: string;
+    userName!: string;
+    email!: string;
+    phoneNumber!: string;
+    password!: string;
     dob?: Date | undefined;
     avatar?: string | undefined;
-    isActive?: boolean;
+    isActive!: boolean;
 
     constructor(data?: ICreateUserRequest) {
         if (data) {
@@ -1783,20 +1858,20 @@ export class CreateUserRequest implements ICreateUserRequest {
 }
 
 export interface ICreateUserRequest {
-    firstName?: string | undefined;
-    lastName?: string | undefined;
-    userName?: string | undefined;
-    email?: string | undefined;
-    phoneNumber?: string | undefined;
-    password?: string | undefined;
+    firstName: string;
+    lastName: string;
+    userName: string;
+    email: string;
+    phoneNumber: string;
+    password: string;
     dob?: Date | undefined;
     avatar?: string | undefined;
-    isActive?: boolean;
+    isActive: boolean;
 }
 
 export class LoginRequest implements ILoginRequest {
-    userName?: string | undefined;
-    password?: string | undefined;
+    userName!: string;
+    password!: string;
 
     constructor(data?: ILoginRequest) {
         if (data) {
@@ -1830,8 +1905,8 @@ export class LoginRequest implements ILoginRequest {
 }
 
 export interface ILoginRequest {
-    userName?: string | undefined;
-    password?: string | undefined;
+    userName: string;
+    password: string;
 }
 
 export class PermissionDto implements IPermissionDto {
@@ -2288,7 +2363,7 @@ export interface IRoleDtoPagedResult {
 }
 
 export class SetPasswordRequest implements ISetPasswordRequest {
-    newPassword?: string | undefined;
+    newPassword!: string;
 
     constructor(data?: ISetPasswordRequest) {
         if (data) {
@@ -2320,12 +2395,12 @@ export class SetPasswordRequest implements ISetPasswordRequest {
 }
 
 export interface ISetPasswordRequest {
-    newPassword?: string | undefined;
+    newPassword: string;
 }
 
 export class TokenRequest implements ITokenRequest {
-    accessToken?: string | undefined;
-    refreshToken?: string | undefined;
+    accessToken!: string;
+    refreshToken!: string;
 
     constructor(data?: ITokenRequest) {
         if (data) {
@@ -2359,17 +2434,17 @@ export class TokenRequest implements ITokenRequest {
 }
 
 export interface ITokenRequest {
-    accessToken?: string | undefined;
-    refreshToken?: string | undefined;
+    accessToken: string;
+    refreshToken: string;
 }
 
 export class UpdateUserRequest implements IUpdateUserRequest {
-    firstName?: string | undefined;
-    lastName?: string | undefined;
-    phoneNumber?: string | undefined;
+    firstName!: string;
+    lastName!: string;
+    phoneNumber!: string;
     dob?: Date | undefined;
     avatar?: string | undefined;
-    isActive?: boolean;
+    isActive!: boolean;
 
     constructor(data?: IUpdateUserRequest) {
         if (data) {
@@ -2411,12 +2486,12 @@ export class UpdateUserRequest implements IUpdateUserRequest {
 }
 
 export interface IUpdateUserRequest {
-    firstName?: string | undefined;
-    lastName?: string | undefined;
-    phoneNumber?: string | undefined;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
     dob?: Date | undefined;
     avatar?: string | undefined;
-    isActive?: boolean;
+    isActive: boolean;
 }
 
 export class UserDto implements IUserDto {

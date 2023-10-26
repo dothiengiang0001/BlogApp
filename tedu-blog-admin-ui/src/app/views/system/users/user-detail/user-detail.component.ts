@@ -5,6 +5,7 @@ import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { UtilityService } from 'src/app/shared/services/utility.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { formatDate } from '@angular/common';
+import Ultilities from './Ultilities/Ultilities';
 import { AdminApiRoleApiClient, AdminApiUserApiClient, RoleDto, UserDto } from 'src/app/api/admin-api.service.generated';
 @Component({
   templateUrl: 'user-detail.component.html',
@@ -24,6 +25,10 @@ export class UserDetailComponent implements OnInit, OnDestroy {
 
   formSavedEventEmitter: EventEmitter<any> = new EventEmitter();
 
+  // Validate
+  noSpecial: RegExp = /^[^<>*!_~]+$/;
+  validationMessages = Ultilities.getValidationMessages();
+
   constructor(
     public ref: DynamicDialogRef,
     public config: DynamicDialogConfig,
@@ -34,6 +39,15 @@ export class UserDetailComponent implements OnInit, OnDestroy {
     private cd: ChangeDetectorRef,
     private sanitizer: DomSanitizer
   ) { }
+
+  
+  /** Life cycle */
+  ngOnInit() {
+    //Init form
+    this.form = Ultilities.buildForm(this.form, this.fb, this.selectedEntity);
+    //Load data to form
+    this.loadDataToForm();
+  }
   ngOnDestroy(): void {
     if (this.ref) {
       this.ref.close();
@@ -41,31 +55,13 @@ export class UserDetailComponent implements OnInit, OnDestroy {
     this.ngUnsubscribe.next();
     this.ngUnsubscribe.complete();
   }
-  // Validate
-  noSpecial: RegExp = /^[^<>*!_~]+$/;
-  validationMessages = {
-    fullName: [{ type: 'required', message: 'Bạn phải nhập tên' }],
-    email: [{ type: 'required', message: 'Bạn phải nhập email' }],
-    userName: [{ type: 'required', message: 'Bạn phải nhập tài khoản' }],
-    password: [
-      { type: 'required', message: 'Bạn phải nhập mật khẩu' },
-      {
-        type: 'pattern',
-        message: 'Mật khẩu ít nhất 8 ký tự, ít nhất 1 số, 1 ký tự đặc biệt, và một chữ hoa',
-      },
-    ],
-    phoneNumber: [{ type: 'required', message: 'Bạn phải nhập số điện thoại' }],
-  };
 
-  ngOnInit() {
-    //Init form
-    this.buildForm();
-    //Load data to form
+  /** Loadding data */
+  loadDataToForm() {
     var roles = this.roleService.getAllRoles();
     this.toggleBlockUI(true);
-    forkJoin({
-      roles
-    })
+
+    forkJoin({ roles })
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe({
         next: (repsonse: any) => {
@@ -97,7 +93,7 @@ export class UserDetailComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: UserDto) => {
           this.selectedEntity = response;
-          this.buildForm();
+          this.form = Ultilities.buildForm(this.form, this.fb, this.selectedEntity);
           this.setMode('update');
 
           this.toggleBlockUI(false);
@@ -108,6 +104,7 @@ export class UserDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** EVENTS */
   onFileChange(event) {
     const reader = new FileReader();
 
@@ -125,13 +122,11 @@ export class UserDetailComponent implements OnInit, OnDestroy {
       };
     }
   }
-  saveChange() {
+  onSubmitForm() {
     this.toggleBlockUI(true);
-
     this.saveData();
   }
-
-  private saveData() {
+  saveData() {
     this.toggleBlockUI(true);
     console.log(this.form.value);
     if (this.utilService.isEmpty(this.config.data?.id)) {
@@ -163,15 +158,19 @@ export class UserDetailComponent implements OnInit, OnDestroy {
         });
     }
   }
-  private toggleBlockUI(enabled: boolean) {
+
+
+  /** OTHERS */
+  // Toggle Loadding => loadDataToForm, onSubmitForm
+  // True => disable submit button and show loadding
+  // False => enable submit button and show loadding
+  toggleBlockUI(enabled: boolean) {
     if (enabled == true) {
       this.btnDisabled = true;
       this.blockedPanelDetail = true;
     } else {
-      setTimeout(() => {
-        this.btnDisabled = false;
-        this.blockedPanelDetail = false;
-      }, 1000);
+      this.btnDisabled = false;
+      this.blockedPanelDetail = false;
     }
   }
 
@@ -191,29 +190,5 @@ export class UserDetailComponent implements OnInit, OnDestroy {
       this.form.controls['password'].addValidators(Validators.required);
       this.form.controls['password'].enable();
     }
-  }
-  buildForm() {
-    this.form = this.fb.group({
-      firstName: new FormControl(this.selectedEntity.firstName || null, Validators.required),
-      lastName: new FormControl(this.selectedEntity.lastName || null, Validators.required),
-      userName: new FormControl(this.selectedEntity.userName || null, Validators.required),
-      email: new FormControl(this.selectedEntity.email || null, Validators.required),
-      phoneNumber: new FormControl(this.selectedEntity.phoneNumber || null, Validators.required),
-      password: new FormControl(
-        null,
-        Validators.compose([
-          Validators.required,
-          Validators.pattern(
-            '^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[$@$!%*?&])[A-Za-zd$@$!%*?&].{8,}$'
-          ),
-        ])
-      ),
-      dob: new FormControl(
-        this.selectedEntity.dob ? formatDate(this.selectedEntity.dob, 'yyyy-MM-dd', 'en') : null
-      ),
-      avatarFile: new FormControl(null),
-      avatar: new FormControl(this.selectedEntity.avatar || null),
-      isActive: new FormControl(this.selectedEntity.isActive || true),
-    });
   }
 }

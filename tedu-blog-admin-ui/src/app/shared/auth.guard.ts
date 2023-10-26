@@ -10,8 +10,8 @@ export class AuthGuard {
 
     }
     canActivate(activateRoute: ActivatedRouteSnapshot, routerState: RouterStateSnapshot): boolean {
-        let requiredPolicy = activateRoute.data["requiredPolicy"] as string;
-        var loggedInUser = this.tokenService.getUser();
+        let requiredPolicy = activateRoute.data["requiredPolicy"] as string; // EX: Permissions.Dashboard.View
+        var loggedInUser = this.tokenService.getUser(); // Get user by token 
         if (loggedInUser) {
             var listPermission = JSON.parse(loggedInUser.permissions);
             if (listPermission != null && listPermission != '' && listPermission.filter(x => x == requiredPolicy).length > 0)

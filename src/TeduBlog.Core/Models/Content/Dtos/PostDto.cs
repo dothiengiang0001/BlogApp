@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using TeduBlog.Core.Domain.Content;
 
-namespace TeduBlog.Core.Models.Content
+namespace TeduBlog.Core.Models.Content.Dtos
 {
     public class PostDto : PostInListDto
     {

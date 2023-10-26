@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TeduBlog.Api.Services;
 using TeduBlog.Core.Domain.Identity;
-using TeduBlog.Core.Models.Auth;
+using TeduBlog.Core.Models.Auth.Requests;
+using TeduBlog.Core.Models.Auth.Results;
 
 namespace TeduBlog.Api.Controllers.AdminApi
 {
@@ -19,6 +20,11 @@ namespace TeduBlog.Api.Controllers.AdminApi
             _tokenService = tokenService;
         }
 
+        /// <summary>
+        /// Refresh token
+        /// </summary>
+        /// <param name="tokenRequest"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("refresh")]
         public async Task<ActionResult<AuthenticatedResult>> Refresh(TokenRequest tokenRequest)
@@ -52,6 +58,11 @@ namespace TeduBlog.Api.Controllers.AdminApi
                 RefreshToken = newRefreshToken
             });
         }
+
+        /// <summary>
+        /// Revoke token
+        /// </summary>
+        /// <returns></returns>
 
         [HttpPost, Authorize]
         [Route("revoke")]

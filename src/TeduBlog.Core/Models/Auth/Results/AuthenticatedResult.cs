@@ -1,4 +1,4 @@
-﻿namespace TeduBlog.Core.Models.Auth
+﻿namespace TeduBlog.Core.Models.Auth.Results
 {
     public class AuthenticatedResult
     {

@@ -2,8 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using TeduBlog.Core.Domain.Content;
 using TeduBlog.Core.Models;
-using TeduBlog.Core.Models.Content;
+using TeduBlog.Core.Models.Content.Dtos;
 using TeduBlog.Core.Repositories;
+using TeduBlog.Data.Persistence;
 using TeduBlog.Data.SeedWorks;
 
 namespace TeduBlog.Data.Repositories

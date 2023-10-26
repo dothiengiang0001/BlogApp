@@ -33,8 +33,8 @@ export class LoginComponent implements OnDestroy{
     private tokenSerivce: TokenStorageService
   ) {
     this.loginForm = this.fb.group({
-      userName: new FormControl('', Validators.required),
-      password: new FormControl('', Validators.required),
+      userName: new FormControl('admin', Validators.required),
+      password: new FormControl('Admin@123$', Validators.required),
     });
   }
   
@@ -58,11 +58,11 @@ export class LoginComponent implements OnDestroy{
         this.tokenSerivce.saveToken(res.token);
         this.tokenSerivce.saveRefreshToken(res.refreshToken);
         this.tokenSerivce.saveUser(res);
+        
         //Redirect to dashboard
         this.router.navigate([UrlConstants.HOME]);
       },
       error: (error: any) => {
-        console.log(error);
         this.alertService.showError('Đăng nhập không đúng.');
         this.loading = false;
       },

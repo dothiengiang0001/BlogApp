@@ -1,6 +1,6 @@
 ﻿using TeduBlog.Core.Domain.Content;
 using TeduBlog.Core.Models;
-using TeduBlog.Core.Models.Content;
+using TeduBlog.Core.Models.Content.Dtos;
 using TeduBlog.Core.SeedWorks;
 
 namespace TeduBlog.Core.Repositories

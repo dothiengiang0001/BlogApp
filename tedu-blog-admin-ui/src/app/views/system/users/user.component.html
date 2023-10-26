@@ -25,24 +25,28 @@
     </div>
     <div class="row mt-3">
       <p-table #dt [value]="items" selectionMode="multiple" dataKey="id" [(selection)]="selectedItems"
-        [metaKeySelection]="true">
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rows]="pageSize"
+        [totalRecords]="totalCount"
+        [metaKeySelection]="true" [scrollable]="true" scrollHeight="500px" [resizableColumns]="true" [tableStyle]="{'min-width': '50rem'}"
+        >
         <ng-template pTemplate="header">
           <tr>
-            <th style="width: 10px">
+            <th>
               <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
             </th>
-            <th>Tên</th>
-            <th>Tài khoản</th>
-            <th>Email</th>
-            <th>Số ĐT</th>
-            <th>Ngày tham gia</th>
-            <th style="width: 150px">Trạng thái</th>
-            <th></th>
+            <th pSortableColumn="FirstName">Name <p-sortIcon field="FirstName"></p-sortIcon></th>
+            <th pSortableColumn="UserName">Account <p-sortIcon field="UserName"></p-sortIcon></th>
+            <th pSortableColumn="Email">Email <p-sortIcon field="Email"></p-sortIcon></th>
+            <th pSortableColumn="PhoneNumber">Phone <p-sortIcon field="PhoneNumber"></p-sortIcon></th>
+            <th pSortableColumn="DateCreated">Created Date <p-sortIcon field="DateCreated"></p-sortIcon></th>
+            <th style="width: 4rem"></th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>
-          <tr [pSelectableRow]="row">
-            <td style="width: 10px">
+          <tr>
+            <td>
               <span class="ui-column-title"></span>
               <p-tableCheckbox [value]="row"></p-tableCheckbox>
             </td>
@@ -51,18 +55,18 @@
             <td>{{ row.email }}</td>
             <td>{{ row.phoneNumber }}</td>
             <td>{{ row.dateCreated | date: 'dd-MM-yyyy hh:mm' }}</td>
-            <td style="width: 150px">
-              <p-badge *ngIf="row.isActive == 1" value="Kích hoạt" severity="success"></p-badge>
-              <p-badge *ngIf="row.isActive == 0" value="Khoá" severity="danger"></p-badge>
+            <td>
+              <p-badge *ngIf="row.isActive == 1" value="Active" severity="success"></p-badge>
+              <p-badge *ngIf="row.isActive == 0" value="InActive" severity="danger"></p-badge>
             </td>
             <td>
               <button pButton pRipple type="button" icon="pi pi-key" pTooltip="Đặt mật khẩu" tooltipPosition="top"
-                class="p-button-rounded p-button-text" (click)="setPassword(row.id)"></button>
+                class="p-button-rounded p-button-text" (click)="onSetPassword(row.id)"></button>
               <button pButton pRipple type="button" icon="pi pi-envelope" pTooltip="Đặt Email" tooltipPosition="top"
-                (click)="changeEmail(row.id)" class="p-button-rounded p-button-text"></button>
+                (click)="onChangeEmail(row.id)" class="p-button-rounded p-button-text"></button>
 
               <button pButton pRipple type="button" icon="pi pi-users" pTooltip="Gán vai trò" tooltipPosition="top"
-                (click)="assignRole(row.id)" class="p-button-rounded p-button-text"></button>
+                (click)="onAssignRole(row.id)" class="p-button-rounded p-button-text"></button>
             </td>
           </tr>
         </ng-template>
@@ -71,10 +75,8 @@
         </ng-template>
       </p-table>
     </div>
-
-    <p-paginator [rows]="pageSize" [totalRecords]="totalCount" (onPageChange)="pageChanged($event)"
-      [rowsPerPageOptions]="[10, 20, 50, 100]"></p-paginator>
-
+    <p-paginator #paginator [rows]="pageSize" [totalRecords]="totalCount" (onPageChange)="onPageChanged($event)"
+    [rowsPerPageOptions]="[10, 20, 50, 100]"></p-paginator>
     <p-blockUI [target]="pnl" [blocked]="blockedPanel">
       <p-progressSpinner [style]="{ width: '100px', height: '100px', position: 'absolute', top: '25%', left: '50%' }"
         strokeWidth="2" animationDuration=".5s"></p-progressSpinner>

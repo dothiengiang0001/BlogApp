@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using TeduBlog.Core.Repositories;
 using TeduBlog.Core.SeedWorks;
+using TeduBlog.Data.Persistence;
 using TeduBlog.Data.Repositories;
 
 namespace TeduBlog.Data.SeedWorks

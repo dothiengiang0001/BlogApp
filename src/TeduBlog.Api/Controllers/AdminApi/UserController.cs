@@ -7,9 +7,15 @@ using TeduBlog.Api.Filters;
 using TeduBlog.Core.Domain.Identity;
 using TeduBlog.Core.Models;
 using TeduBlog.Core.SeedWorks.Constants;
-using TeduBlog.Core.Models.System;
 using Microsoft.EntityFrameworkCore;
 using TeduBlog.Api.Extensions;
+using TeduBlog.Core.Models.System.Requests;
+using TeduBlog.Core.Models.System.Dtos;
+using TeduBlog.Data.Persistence;
+using System.Runtime.CompilerServices;
+using TeduBlog.Core.Ultilities;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Linq;
 
 namespace TeduBlog.Api.Controllers.AdminApi
 {
@@ -18,11 +24,13 @@ namespace TeduBlog.Api.Controllers.AdminApi
     {
         private readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
+        private readonly TeduBlogContext _teduBlogContext;
 
-        public UserController(UserManager<AppUser> userManager, IMapper mapper)
+        public UserController(UserManager<AppUser> userManager, IMapper mapper, TeduBlogContext teduBlogContext)
         {
             _mapper = mapper;
             _userManager = userManager;
+            _teduBlogContext = teduBlogContext;
         }
 
         [HttpGet("{id}")]
@@ -42,9 +50,37 @@ namespace TeduBlog.Api.Controllers.AdminApi
 
         [HttpGet("paging")]
         [Authorize(Users.View)]
-        public async Task<ActionResult<PagedResult<UserDto>>> GetAllUsersPaging(string? keyword, int pageIndex, int pageSize)
+        public async Task<ActionResult<PagedResult<UserDto>>> GetAllUsersPaging(string? sortField, int sortOrder, string? keyword, int pageIndex, int pageSize)
         {
             var query = _userManager.Users;
+
+            /** SORT **/
+            // Default
+            if (string.IsNullOrEmpty(sortField))
+            {
+                query = query.OrderByDescending(x => x.DateCreated);
+            }
+            else
+            {
+                switch (sortOrder)
+                {
+                    case 1:
+                        {
+                            query = query.OrderBy(x => EF.Property<object>(x, sortField));
+                            break;
+                        }
+
+                    case -1:
+                        {
+                            query = query.OrderByDescending(x => EF.Property<object>(x, sortField));
+                            break;
+                        }
+                    default:
+                        break;
+                }
+            }
+
+            // Finding
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(x => x.FirstName.Contains(keyword)
@@ -53,12 +89,13 @@ namespace TeduBlog.Api.Controllers.AdminApi
                                          || x.PhoneNumber.Contains(keyword));
             }
 
+            // Paging
             var totalRow = await query.CountAsync();
-
-            query = query.OrderByDescending(x => x.DateCreated)
+            query = query
                .Skip((pageIndex - 1) * pageSize)
                .Take(pageSize);
 
+            // Return results
             var pagedResponse = new PagedResult<UserDto>
             {
                 Results = await _mapper.ProjectTo<UserDto>(query).ToListAsync(),
@@ -84,7 +121,10 @@ namespace TeduBlog.Api.Controllers.AdminApi
                 return BadRequest();
             }
             var user = _mapper.Map<CreateUserRequest, AppUser>(request);
+
             var result = await _userManager.CreateAsync(user, request.Password);
+            await _userManager.SetLockoutEnabledAsync(user, false);
+            await _teduBlogContext.SaveChangesAsync();
 
             if (result.Succeeded)
             {

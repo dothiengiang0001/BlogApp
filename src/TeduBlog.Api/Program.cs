@@ -9,13 +9,13 @@ using System.Text;
 using TeduBlog.Api;
 using TeduBlog.Api.Authorization;
 using TeduBlog.Api.Filters;
+using TeduBlog.Api.Middlewares;
 using TeduBlog.Api.Services;
 using TeduBlog.Core.ConfigOptions;
 using TeduBlog.Core.Domain.Identity;
-using TeduBlog.Core.Models.Content;
-using TeduBlog.Core.Repositories;
+using TeduBlog.Core.Models.Content.Dtos;
 using TeduBlog.Core.SeedWorks;
-using TeduBlog.Data;
+using TeduBlog.Data.Persistence;
 using TeduBlog.Data.Repositories;
 using TeduBlog.Data.SeedWorks;
 
@@ -35,10 +35,13 @@ builder.Services.AddCors(o => o.AddPolicy(TeduCorsPolicy, builder =>
 }));
 //Config DB Context and ASP.NET Core Identity
 builder.Services.AddDbContext<TeduBlogContext>(options =>
-                options.UseSqlServer(connectionString));
+{
+    options.UseSqlServer(connectionString);
+});
 
 builder.Services.AddIdentity<AppUser, AppRole>(options => options.SignIn.RequireConfirmedAccount = false)
-    .AddEntityFrameworkStores<TeduBlogContext>();
+    .AddEntityFrameworkStores<TeduBlogContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -122,8 +125,13 @@ builder.Services.AddAuthentication(o =>
     {
         ValidIssuer = configuration["JwtTokenSettings:Issuer"],
         ValidAudience = configuration["JwtTokenSettings:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtTokenSettings:Key"]))
-    };
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtTokenSettings:Key"])),
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
+        RequireExpirationTime = true
+};
+
 });
 
 var app = builder.Build();
@@ -132,6 +140,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+    app.UseMiddleware<SwaggerRedirectMiddleware>();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("AdminAPI/swagger.json", "Admin API");
@@ -147,6 +156,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 //Seeding data
-app.MigrateDatabase();
+await app.MigrateDatabaseAsync();
 
 app.Run();

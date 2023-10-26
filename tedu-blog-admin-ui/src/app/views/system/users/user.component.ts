@@ -1,20 +1,24 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ConfirmationService } from 'primeng/api';
+import { Helper } from './../../../shared/ultilities/helper';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ConfirmationService, LazyLoadEvent, SortEvent } from 'primeng/api';
 import { DialogService, DynamicDialogComponent } from 'primeng/dynamicdialog';
-import { Subject, takeUntil } from 'rxjs';
-import { ChangeEmailComponent } from './change-email.component';
-import { RoleAssignComponent } from './role-assign.component';
-import { SetPasswordComponent } from './set-password.component';
-import { UserDetailComponent } from './user-detail.component';
+import { Subject, map, takeUntil } from 'rxjs';
+import { ChangeEmailComponent } from './change-email/change-email.component';
+import { RoleAssignComponent } from './role-assign/role-assign.component';
+import { SetPasswordComponent } from './set-password/set-password.component';
+import { UserDetailComponent } from './user-detail/user-detail.component';
 import { AdminApiUserApiClient, UserDto, UserDtoPagedResult } from 'src/app/api/admin-api.service.generated';
 import { AlertService } from 'src/app/shared/services/alert.service';
 import { MessageConstants } from 'src/app/shared/constants/messages.constant';
+import { Table } from 'primeng/table';
+import { UtilityService } from 'src/app/shared/services/utility.service';
+import { Paginator } from 'primeng/paginator';
 
 @Component({
     selector: 'app-user',
     templateUrl: './user.component.html',
 })
-export class UserComponent implements OnInit, OnDestroy {
+export class UserComponent implements OnDestroy {
     //System variables
     private ngUnsubscribe = new Subject<void>();
     public blockedPanel: boolean = false;
@@ -23,17 +27,25 @@ export class UserComponent implements OnInit, OnDestroy {
     public pageIndex: number = 1;
     public pageSize: number = 10;
     public totalCount: number;
+    public sortField = null;
+    public sortOrder = -1;
 
     //Business variables
     public items: UserDto[];
     public selectedItems: UserDto[] = [];
     public keyword: string = '';
 
+    @ViewChild('dt', { static: true }) dataTable: Table;
+    @ViewChild('paginator', { static: true }) paginator: Paginator;
+    
+    sizes!: any[];
+
     constructor(
         private userService: AdminApiUserApiClient,
         public dialogService: DialogService,
         private alertService: AlertService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private utilityService: UtilityService
     ) {}
 
     ngOnDestroy(): void {
@@ -41,14 +53,19 @@ export class UserComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    ngOnInit() {
+    onLazyLoad($event) {
+        this.pageIndex = ($event.first / this.pageSize) + 1;
+        this.sortField = $event.sortField;
+        this.sortOrder = $event.sortOrder;
+        this.pageSize = $event.rows;
+        this.paginator.changePage(this.pageIndex - 1);
         this.loadData();
     }
 
     loadData(selectionId = null) {
         this.toggleBlockUI(true);
         this.userService
-            .getAllUsersPaging(this.keyword, this.pageIndex, this.pageSize)
+            .getAllUsersPaging(this.sortField, this.sortOrder, this.keyword, this.pageIndex, this.pageSize)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: (response: UserDtoPagedResult) => {
@@ -59,7 +76,6 @@ export class UserComponent implements OnInit, OnDestroy {
                             (x) => x.id == selectionId
                         );
                     }
-
                     this.toggleBlockUI(false);
                 },
                 error: () => {
@@ -86,12 +102,6 @@ export class UserComponent implements OnInit, OnDestroy {
                 this.loadData();
             }
         });
-    }
-
-    pageChanged(event: any): void {
-        this.pageIndex = event.page;
-        this.pageSize = event.rows;
-        this.loadData();
     }
 
     showEditModal() {
@@ -160,7 +170,7 @@ export class UserComponent implements OnInit, OnDestroy {
         });
     }
 
-    setPassword(id: string) {
+    onSetPassword(id: string) {
         const ref = this.dialogService.open(SetPasswordComponent, {
             data: {
                 id: id,
@@ -182,7 +192,8 @@ export class UserComponent implements OnInit, OnDestroy {
             }
         });
     }
-    changeEmail(id: string) {
+
+    onChangeEmail(id: string) {
         const ref = this.dialogService.open(ChangeEmailComponent, {
             data: {
                 id: id,
@@ -204,9 +215,15 @@ export class UserComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    onPageChanged(event: any): void {
+        this.pageIndex = event.page + 1;
+        this.pageSize = event.rows;
+        this.loadData();
+    }
    
     
-    assignRole(id: string) {
+    onAssignRole(id: string) {
         const ref = this.dialogService.open(RoleAssignComponent, {
             data: {
                 id: id,
@@ -232,9 +249,7 @@ export class UserComponent implements OnInit, OnDestroy {
         if (enabled == true) {
             this.blockedPanel = true;
         } else {
-            setTimeout(() => {
-                this.blockedPanel = false;
-            }, 1000);
+            this.blockedPanel = false;
         }
     }
 }
